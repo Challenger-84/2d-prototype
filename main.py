@@ -9,7 +9,7 @@ screen_height = 800
 screen_width = 1200
 screen_title = "Plat former"
 
-gravity = 4.5
+gravity = 4.0
 
 # Scroll value
 scroll = 100
@@ -23,17 +23,18 @@ TOP_VIEWPORT_MARGIN = 50
 # todo make the view good
 
 
-class MyGame(arcade.Window):
+class GameView(arcade.View):
     """
     Main application class
     """
 
     def __init__(self):
         # Call the parent init
-        super().__init__(screen_width, screen_height, screen_title)
+        super().__init__()
 
         arcade.set_background_color(arcade.color.BLACK)
 
+        self.window.set_mouse_visible(False)
         # Sprite Lists
         self.player_list = None
         self.platform_list = None
@@ -46,9 +47,9 @@ class MyGame(arcade.Window):
         # Procedural Level Generator
         self.proGenerator = None
         # Back Ground Sprite
-        self.red_blob = arcade.SpriteSolidColor(500, self.height, arcade.color.RED)
+        self.red_blob = arcade.SpriteSolidColor(500, self.window.height, arcade.color.RED)
         self.red_blob.center_x = -250
-        self.red_blob.center_y = self.height/2
+        self.red_blob.center_y = self.window.height/2
 
         # Keep track for our scrolling
         self.view_bottom = 0
@@ -59,7 +60,7 @@ class MyGame(arcade.Window):
 
         # Player Sprites
         self.player_list = arcade.SpriteList()
-        self.player = Player(self, 50, 50, arcade.color.CYAN, self.setup)
+        self.player = Player(self.window, 50, 50, arcade.color.CYAN, self.setup)
         self.player_list.append(self.player)
 
         # Platform Sprites
@@ -69,7 +70,7 @@ class MyGame(arcade.Window):
         self.chunk_marker_list = arcade.SpriteList()
 
         # Procedural Generator
-        self.proGenerator = LevelGenerator(self.platform_list, self.chunk_marker_list, self)
+        self.proGenerator = LevelGenerator(self.platform_list, self.chunk_marker_list, self.window)
 
         # Physics Engine
         self.physics_engine = PhysicsEnginePlatformer(self.player, self.platform_list, gravity_constant=gravity)
@@ -117,9 +118,9 @@ class MyGame(arcade.Window):
 
     def on_update(self, delta_time: float):
         # Adding scroll
-        self.player.center_x -= int(scroll * delta_time)
+        self.player.center_x -= int(scroll*delta_time)
         for platform in self.platform_list:
-            platform.center_x -= int(scroll * delta_time)
+            platform.center_x -= int(scroll*delta_time)
 
         # Manage view of the screen
         self.manage_viewport()
@@ -166,10 +167,50 @@ class MyGame(arcade.Window):
         self.red_blob.draw()
         # self.chunk_marker_list.draw()
 
+class StartView(arcade.View):
+
+    def __init__(self):
+        super().__init__()
+        self.blink_val = 0
+        self.max_blink_val = 40
+        self.blink = False
+
+    def on_show(self):
+        """ This is run once when we switch to this view """
+        arcade.set_background_color(arcade.csscolor.BLACK)
+
+        # Reset the viewport, necessary if we have a scrolling game and we need
+        # to reset the viewport back to the start so we can see what we draw.
+        arcade.set_viewport(0, screen_width-1, 0, screen_height-1)
+
+    def on_update(self, delta_time: float):
+        self.blink_val += 1
+        if self.blink_val >= self.max_blink_val:
+            self.blink = not self.blink
+            self.blink_val = 0
+
+    def on_draw(self):
+        """ Draw this view """
+        arcade.start_render()
+
+        arcade.draw_text("Welcome!", screen_width / 2, screen_height / 2 + 100,
+                         arcade.color.WHITE, font_size=50, anchor_x="center")
+
+        if not self.blink:
+            arcade.draw_text("Press enter to begin the game", screen_width / 2, screen_height / 2 - 75,
+                             arcade.csscolor.NAVAJO_WHITE, font_size=30, anchor_x="center")
+
+    def on_key_press(self, key: int, modifiers: int):
+
+        if key == arcade.key.ENTER:
+            game_view = GameView()
+            game_view.setup()
+            self.window.show_view(game_view)
 
 def main():
-    window = MyGame()
-    window.setup()
+    window = arcade.Window(screen_width, screen_height, screen_title)
+    start_view = StartView()
+    window.show_view(start_view)
     arcade.run()
 
 

@@ -14,7 +14,7 @@ class Player(arcade.SpriteSolidColor):
         self.center_x = 300
 
         # Movement related variable
-        self.speed = 20
+        self.speed = 10
         self.jump_speed = 55
 
         self.right_pressed = False
