@@ -1,2 +1,9 @@
 /venv
 .idea
+/dist
+*.spec
+/build
+# No pycache
+/__pycache__/
+*/__pycache__/
+*/*/__pycache__/

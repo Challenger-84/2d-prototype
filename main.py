@@ -20,6 +20,8 @@ LEFT_VIEWPORT_MARGIN = 650
 RIGHT_VIEWPORT_MARGIN = 650
 BOTTOM_VIEWPORT_MARGIN = 50
 TOP_VIEWPORT_MARGIN = 50
+
+
 # todo make the view good
 
 
@@ -49,7 +51,7 @@ class GameView(arcade.View):
         # Back Ground Sprite
         self.red_blob = arcade.SpriteSolidColor(500, self.window.height, arcade.color.RED)
         self.red_blob.center_x = -250
-        self.red_blob.center_y = self.window.height/2
+        self.red_blob.center_y = self.window.height / 2
 
         # Keep track for our scrolling
         self.view_bottom = 0
@@ -118,9 +120,9 @@ class GameView(arcade.View):
 
     def on_update(self, delta_time: float):
         # Adding scroll
-        self.player.center_x -= int(scroll*delta_time)
+        self.player.center_x -= int(scroll * delta_time)
         for platform in self.platform_list:
-            platform.center_x -= int(scroll*delta_time)
+            platform.center_x -= int(scroll * delta_time)
 
         # Manage view of the screen
         self.manage_viewport()
@@ -167,6 +169,7 @@ class GameView(arcade.View):
         self.red_blob.draw()
         # self.chunk_marker_list.draw()
 
+
 class StartView(arcade.View):
 
     def __init__(self):
@@ -181,7 +184,7 @@ class StartView(arcade.View):
 
         # Reset the viewport, necessary if we have a scrolling game and we need
         # to reset the viewport back to the start so we can see what we draw.
-        arcade.set_viewport(0, screen_width-1, 0, screen_height-1)
+        arcade.set_viewport(0, screen_width - 1, 0, screen_height - 1)
 
     def on_update(self, delta_time: float):
         self.blink_val += 1
@@ -206,6 +209,7 @@ class StartView(arcade.View):
             game_view = GameView()
             game_view.setup()
             self.window.show_view(game_view)
+
 
 def main():
     window = arcade.Window(screen_width, screen_height, screen_title)
