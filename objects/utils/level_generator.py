@@ -121,7 +121,6 @@ class Chunk:
 
             # Check if the platform collides with another platform
             if platform.collides_with_list(self.platform_SpriteList):
-                print('collides')
                 self.collide_resistance -= 0.1  # Lessen the value of collide resistance
                 if self.collide_resistance < random.random():
                     # There is a chance the no new platform will be spawned if there is a lot of collision
@@ -151,7 +150,6 @@ class Chunk:
         else:
             new_platform_chance = random.randint(0, 49)
 
-        print(new_platform_chance)
         if new_platform_chance == 0:
             # Spawn a random platform
             self.spawn_platform(self.start_x, random.randrange(0, self.screen.height - 50),
