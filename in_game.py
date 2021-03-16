@@ -1,7 +1,11 @@
 import arcade
-from objects.utils.level_generator import LevelGenerator
+from utils.level_generator import LevelGenerator
 from objects.player import Player
 from changes_to_arcade.phy_engine_change import PhysicsEnginePlatformer
+
+import timeit
+import time
+import collections
 
 # How many pixels to keep as a minimum margin between the character
 # and the edge of the screen.
@@ -9,11 +13,31 @@ LEFT_VIEWPORT_MARGIN = 600
 RIGHT_VIEWPORT_MARGIN = 600
 BOTTOM_VIEWPORT_MARGIN = 50
 TOP_VIEWPORT_MARGIN = 50
+
 screen_height = 800
 screen_width = 1200
 # Scroll value
 scroll = 100
 gravity = 4.0
+
+
+class FPSCounter:
+    def __init__(self):
+        self.time = time.perf_counter()
+        self.frame_times = collections.deque(maxlen=60)
+
+    def tick(self):
+        t1 = time.perf_counter()
+        dt = t1 - self.time
+        self.time = t1
+        self.frame_times.append(dt)
+
+    def get_fps(self):
+        total_time = sum(self.frame_times)
+        if total_time == 0:
+            return 0
+        else:
+            return len(self.frame_times) / sum(self.frame_times)
 
 
 # View when in game
@@ -52,6 +76,17 @@ class GameView(arcade.View):
         self.directional_move = 0
         self.directional_move_rate = 1
 
+        # FPS
+        self.processing_time = 0
+        self.draw_time = 0
+        self.program_start_time = timeit.default_timer()
+        self.sprite_count_list = []
+        self.fps_list = []
+        self.processing_time_list = []
+        self.drawing_time_list = []
+        self.last_fps_reading = 0
+        self.fps = FPSCounter()
+
     def setup(self):
         # Setting up the game
 
@@ -88,17 +123,17 @@ class GameView(arcade.View):
             self.view_left += self.player.right - right_boundary + self.directional_move
             changed = True
 
-        # Scroll up
-        top_boundary = self.view_bottom + screen_height - TOP_VIEWPORT_MARGIN
-        if self.player.top > top_boundary:
-            self.view_bottom += self.player.top - top_boundary
-            changed = True
-
-        # Scroll down
-        bottom_boundary = self.view_bottom + BOTTOM_VIEWPORT_MARGIN
-        if self.player.bottom < bottom_boundary:
-            self.view_bottom -= bottom_boundary - self.player.bottom
-            changed = True
+        # # Scroll up
+        # top_boundary = self.view_bottom + screen_height - TOP_VIEWPORT_MARGIN
+        # if self.player.top > top_boundary:
+        #     self.view_bottom += self.player.top - top_boundary
+        #     changed = True
+        #
+        # # Scroll down
+        # bottom_boundary = self.view_bottom + BOTTOM_VIEWPORT_MARGIN
+        # if self.player.bottom < bottom_boundary:
+        #     self.view_bottom -= bottom_boundary - self.player.bottom
+        #     changed = True
 
         if changed:
             # Only scroll to integers. Otherwise we end up with pixels that
@@ -113,6 +148,8 @@ class GameView(arcade.View):
                                 screen_height + self.view_bottom)
 
     def on_update(self, delta_time: float):
+        start_time = timeit.default_timer()
+
         # Adding scroll
         self.player.center_x -= int(scroll * delta_time)
         for platform in self.platform_list:
@@ -131,6 +168,14 @@ class GameView(arcade.View):
 
         # Updating the procedural generator
         self.proGenerator.update(self.player.center_x, scroll, delta_time)
+
+        # Save the time it took to do this.
+        self.processing_time = timeit.default_timer() - start_time
+
+        # Total time program has been running
+        total_program_time = int(timeit.default_timer() - self.program_start_time)
+        if total_program_time > self.last_fps_reading:
+            self.last_fps_reading = total_program_time
 
     def on_key_press(self, key, modifiers):
         """Called whenever a key is pressed"""
@@ -164,6 +209,7 @@ class GameView(arcade.View):
 
     def on_draw(self):
         # Renders the screen
+        draw_start_time = timeit.default_timer()
 
         arcade.start_render()
 
@@ -171,4 +217,11 @@ class GameView(arcade.View):
         self.player_list.draw()
         self.platform_list.draw()
         self.red_blob.draw()
+
+        fps = self.fps.get_fps()
+        output = f"FPS: {fps:3.0f}"
+        arcade.draw_text(output, self.player.center_x, screen_height - 80, arcade.color.WHITE, 30)
+
+        self.draw_time = timeit.default_timer() - draw_start_time
+        self.fps.tick()
         # self.chunk_marker_list.draw()

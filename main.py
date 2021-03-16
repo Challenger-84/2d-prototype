@@ -2,6 +2,7 @@
 import arcade
 import arcade.gui
 from arcade.gui import UIManager
+from ui_buttons import StartButton, OptionsButton, QuitButton, BackButton
 
 from in_game import GameView
 
@@ -9,22 +10,6 @@ from in_game import GameView
 screen_height = 800
 screen_width = 1200
 screen_title = "Plat former"
-
-
-class MyFlatButton(arcade.gui.UIFlatButton):
-    """
-    To capture a button click, subclass the button and override on_click.
-    """
-
-    def __init__(self, text, center_x, center_y, width, view):
-        super().__init__(text, center_x, center_y, width)
-        self.view = view
-
-    def on_click(self):
-        """ Called when user lets off button """
-        game_view = GameView()
-        game_view.setup()
-        self.view.window.show_view(game_view)
 
 
 class StartView(arcade.View):
@@ -39,16 +24,18 @@ class StartView(arcade.View):
 
     def on_show(self):
         """ This is run once when we switch to this view """
-        arcade.set_background_color(arcade.csscolor.BLACK)
+        arcade.set_background_color(arcade.color.BLACK_OLIVE)
 
-        button = MyFlatButton(
-            'CLICK HERE',
-            center_x=600,
-            center_y=300,
-            width=200,
-            view=self
-        )
+        # Start Button
+        button = StartButton(self.window.width / 2, 500, 200, view=self, game_view=GameView)
+        self.uimanager.add_ui_element(button)
 
+        # Options Button
+        button = OptionsButton(self.window.width / 2, 400, 200, view=self, options_view=OptionView)
+        self.uimanager.add_ui_element(button)
+
+        # Quit Button
+        button = QuitButton(self.window.width / 2, 300, 200, view=self)
         self.uimanager.add_ui_element(button)
 
         # Reset the viewport, necessary if we have a scrolling game and we need
@@ -56,6 +43,7 @@ class StartView(arcade.View):
         arcade.set_viewport(0, screen_width - 1, 0, screen_height - 1)
 
     def on_hide_view(self):
+        print('Hide')
         self.uimanager.unregister_handlers()
 
     def on_update(self, delta_time: float):
@@ -68,19 +56,32 @@ class StartView(arcade.View):
         """ Draw this view """
         arcade.start_render()
 
-        arcade.draw_text("Welcome!", screen_width / 2, screen_height / 2 + 100,
-                         arcade.color.WHITE, font_size=50, anchor_x="center")
-
         if not self.blink:
-            arcade.draw_text("Press enter to begin the game", screen_width / 2, screen_height / 2 - 75,
-                             arcade.csscolor.NAVAJO_WHITE, font_size=30, anchor_x="center")
+            arcade.draw_text("Square Rush", screen_width / 2, screen_height / 2 + 200,
+                             arcade.color.WHITE, font_size=100, anchor_x="center")
 
-    def on_key_press(self, key: int, modifiers: int):
 
-        if key == arcade.key.ENTER:
-            game_view = GameView()
-            game_view.setup()
-            self.window.show_view(game_view)
+class OptionView(arcade.View):
+
+    def __init__(self):
+        super().__init__()
+        self.ui_manager = UIManager()
+        self.bg = arcade.SpriteSolidColor(screen_width, screen_height, arcade.color.BLACK_OLIVE)
+        self.bg.bottom = 0
+        self.bg.left = 0
+
+    def on_show(self):
+
+        button = BackButton(self.window.width / 2, 300, 200, self, start_view=StartView)
+        self.ui_manager.add_ui_element(button)
+
+    def on_draw(self):
+        self.bg.draw()
+        arcade.draw_text('OPTIONS', self.window.width / 2, 600,
+                         arcade.color.ORANGE, font_size=80, anchor_x="center")
+
+    def on_hide_view(self):
+        self.ui_manager.unregister_handlers()
 
 
 def main():
