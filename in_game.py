@@ -72,7 +72,7 @@ class GameView(arcade.View):
 
         # Player Sprites
         self.player_list = arcade.SpriteList()
-        self.player = Player(self.window, 50, 50, arcade.color.CYAN, self.setup)
+        self.player = Player(self.window, 'images/player_img/player.png', self.setup)
         self.player_list.append(self.player)
 
         # Platform Sprites
@@ -145,6 +145,9 @@ class GameView(arcade.View):
 
         # Updating the player and platforms
         self.player.on_update(delta_time, self.physics_engine, self)
+        for particle in self.player.particles:
+            particle.on_update(delta_time, platforms=self.platform_list)
+
         self.platform_list.on_update(delta_time)
         self.chunk_marker_list.on_update(delta_time)
 
@@ -202,6 +205,7 @@ class GameView(arcade.View):
 
         # Draw our sprites
         self.player_list.draw()
+        self.player.particles.draw()
         self.platform_list.draw()
         self.red_blob.draw()
 
