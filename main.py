@@ -3,7 +3,7 @@ import arcade
 import arcade.gui
 from arcade.gui import UIManager
 from ui_elem.ui_start import StartButton, OptionsButton, QuitButton
-from ui_elem.ui_options import BackButton, ShowFPSButton, FullScreenButton
+from ui_elem.ui_options import BackButton, ShowFPSButton, FullScreenButton, ResolutionButton
 
 from in_game import GameView
 
@@ -28,6 +28,11 @@ class GameWindow(arcade.Window):
         # Set view because our game has scroll
         width, height = self.get_size()
         self.set_viewport(0, width, 0, height)
+
+    def on_resize(self, width: float, height: float):
+        global screen_width, screen_height
+        screen_width = width
+        screen_height = height
 
 
 class StartView(arcade.View):
@@ -95,7 +100,7 @@ class OptionView(arcade.View):
     def on_show(self):
 
         # Back Button
-        button = BackButton(self.window.width / 2, 300, 200, self, start_view=StartView)
+        button = BackButton(self.window.width / 2, 200, 200, self, start_view=StartView)
         self.ui_manager.add_ui_element(button)
 
         # Options Button
@@ -103,7 +108,11 @@ class OptionView(arcade.View):
         self.ui_manager.add_ui_element(button)
 
         # Change Full screen Button
-        button = FullScreenButton(self.window.width/2 , 400, 200, self)
+        button = FullScreenButton(self.window.width/2, 400, 200, self)
+        self.ui_manager.add_ui_element(button)
+
+        # Change Res Button
+        button = ResolutionButton(self.window.width/2, 300, 200, self, main)
         self.ui_manager.add_ui_element(button)
 
     def on_update(self, delta_time: float):
