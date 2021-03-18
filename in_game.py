@@ -4,8 +4,6 @@ from objects.player import Player
 from changes_to_arcade.phy_engine_change import PhysicsEnginePlatformer
 
 import timeit
-import time
-import collections
 
 # How many pixels to keep as a minimum margin between the character
 # and the edge of the screen.
@@ -21,25 +19,6 @@ scroll = 100
 gravity = 4.0
 
 
-class FPSCounter:
-    def __init__(self):
-        self.time = time.perf_counter()
-        self.frame_times = collections.deque(maxlen=60)
-
-    def tick(self):
-        t1 = time.perf_counter()
-        dt = t1 - self.time
-        self.time = t1
-        self.frame_times.append(dt)
-
-    def get_fps(self):
-        total_time = sum(self.frame_times)
-        if total_time == 0:
-            return 0
-        else:
-            return len(self.frame_times) / sum(self.frame_times)
-
-
 # View when in game
 class GameView(arcade.View):
     """
@@ -51,7 +30,6 @@ class GameView(arcade.View):
         super().__init__()
 
         arcade.set_background_color(arcade.color.BLACK)
-        self.fullscreen = False
 
         self.window.set_mouse_visible(True)
         # Sprite Lists
@@ -76,16 +54,18 @@ class GameView(arcade.View):
         self.directional_move = 0
         self.directional_move_rate = 1
 
-        # FPS
+        # --- Variables for our statistics
+
+        # Time for on_update
         self.processing_time = 0
+
+        # Time for on_draw
         self.draw_time = 0
-        self.program_start_time = timeit.default_timer()
-        self.sprite_count_list = []
-        self.fps_list = []
-        self.processing_time_list = []
-        self.drawing_time_list = []
-        self.last_fps_reading = 0
-        self.fps = FPSCounter()
+
+        # Variables used to calculate frames per second
+        self.frame_count = 0
+        self.fps_start_timer = None
+        self.fps = None
 
     def setup(self):
         # Setting up the game
@@ -148,6 +128,8 @@ class GameView(arcade.View):
                                 screen_height + self.view_bottom)
 
     def on_update(self, delta_time: float):
+
+        # Start timing how long this takes
         start_time = timeit.default_timer()
 
         # Adding scroll
@@ -169,13 +151,8 @@ class GameView(arcade.View):
         # Updating the procedural generator
         self.proGenerator.update(self.player.center_x, scroll, delta_time)
 
-        # Save the time it took to do this.
+        # Stop the draw timer, and calculate total on_draw time.
         self.processing_time = timeit.default_timer() - start_time
-
-        # Total time program has been running
-        total_program_time = int(timeit.default_timer() - self.program_start_time)
-        if total_program_time > self.last_fps_reading:
-            self.last_fps_reading = total_program_time
 
     def on_key_press(self, key, modifiers):
         """Called whenever a key is pressed"""
@@ -189,13 +166,7 @@ class GameView(arcade.View):
 
         if key == arcade.key.F:
             # User hits f. Flip between full and not full screen.
-            self.window.set_fullscreen(not self.fullscreen)
-            self.fullscreen = True
-
-            # Get the window coordinates. Match viewport to window coordinates
-            # so there is a one-to-one mapping.
-            width, height = self.window.get_size()
-            self.window.set_viewport(0, width, 0, height)
+            self.window.change_fullscreen()
 
     def on_key_release(self, key, modifiers):
         """When a key is released"""
@@ -208,9 +179,25 @@ class GameView(arcade.View):
             self.player.right_pressed = False
 
     def on_draw(self):
-        # Renders the screen
-        draw_start_time = timeit.default_timer()
+        # Start timing how long this takes
+        start_time = timeit.default_timer()
 
+        # --- Calculate FPS
+
+        fps_calculation_freq = 60
+        # Once every 60 frames, calculate our FPS
+        if self.frame_count % fps_calculation_freq == 0:
+            # Do we have a start time?
+            if self.fps_start_timer is not None:
+                # Calculate FPS
+                total_time = timeit.default_timer() - self.fps_start_timer
+                self.fps = fps_calculation_freq / total_time
+            # Reset the timer
+            self.fps_start_timer = timeit.default_timer()
+        # Add one to our frame count
+        self.frame_count += 1
+
+        # Start Drawing
         arcade.start_render()
 
         # Draw our sprites
@@ -218,10 +205,19 @@ class GameView(arcade.View):
         self.platform_list.draw()
         self.red_blob.draw()
 
-        fps = self.fps.get_fps()
-        output = f"FPS: {fps:3.0f}"
-        arcade.draw_text(output, self.player.center_x, screen_height - 80, arcade.color.WHITE, 30)
+        # Display timings
+        if self.window.show_fps:
+            output = f"Processing time: {self.processing_time:.3f}"
+            arcade.draw_text(output, self.player.center_x-400, screen_height - 25, arcade.color.WHITE, 18)
 
-        self.draw_time = timeit.default_timer() - draw_start_time
-        self.fps.tick()
+            output = f"Drawing time: {self.draw_time:.3f}"
+            arcade.draw_text(output, self.player.center_x-400, screen_height - 50, arcade.color.WHITE, 18)
+
+            if self.fps is not None:
+                output = f"FPS: {self.fps:.0f}"
+                arcade.draw_text(output, self.player.center_x-400, screen_height - 75, arcade.color.WHITE, 18)
+
+            # Stop the draw timer, and calculate total on_draw time.
+            self.draw_time = timeit.default_timer() - start_time
+
         # self.chunk_marker_list.draw()
