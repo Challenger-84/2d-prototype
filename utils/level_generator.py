@@ -128,13 +128,28 @@ class Chunk:
                     self.collide_resistance -= 0
                 del platform  # delete this platform
             else:
-                self.platform_SpriteList.append(platform)
+                # Check if the platform is close together with other platform
+                test_platform = Platform(platform_x,platform_y-50,platform_length, 150, self.color)
 
-                if self.end_x - (platform_x + platform_length) > 150:  # If the platform in not near the end
-                    self.in_platforms.append(platform)  # Add it to the in platforms list
+                if test_platform.collides_with_list(self.platform_SpriteList):
+                    self.collide_resistance -= 0.1  # Lessen the value of collide resistance
+                    if self.collide_resistance < random.random():
+                        # There is a chance the no new platform will be spawned if there is a lot of collision
+                        self.spawn_platform(x, y, offset_y, offset_x)  # If it can create a new platform
+                        self.collide_resistance -= 0
 
-                else:    # If the platform is at the end
-                    self.end_platforms.append(platform)  # Add it to the end platforms list
+                    del test_platform
+                    del platform  # delete this platform
+
+                else:
+                    self.platform_SpriteList.append(platform)
+
+                    if self.end_x - (platform_x + platform_length) > 150:  # If the platform in not near the end
+                        self.in_platforms.append(platform)  # Add it to the in platforms list
+
+                    else:    # If the platform is at the end
+                        self.end_platforms.append(platform)  # Add it to the end platforms list
+
         else:
             if platform:
                 if platform not in self.end_platforms:
