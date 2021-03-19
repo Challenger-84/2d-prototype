@@ -42,6 +42,7 @@ class GameView(arcade.View):
         self.player = None
         # Weapons
         self.shortgun = None
+        self.bullet_list = None
         # Physics Engine
         self.physics_engine = None
         # Procedural Level Generator
@@ -80,6 +81,7 @@ class GameView(arcade.View):
 
         # Giving the player shortgun
         self.shortgun = Shortgun('images/weapons/shortgun.png', scale=0.21, player=self.player)
+        self.bullet_list = arcade.SpriteList()
 
         # Platform Sprites
         self.platform_list = arcade.SpriteList()
@@ -155,6 +157,8 @@ class GameView(arcade.View):
             particle.on_update(delta_time, platforms=self.platform_list)
 
         self.shortgun.on_update(delta_time)
+        for bullet in self.bullet_list:
+            bullet.on_update(delta_time, self.platform_list)
 
         self.platform_list.on_update(delta_time)
         self.chunk_marker_list.on_update(delta_time)
@@ -194,7 +198,7 @@ class GameView(arcade.View):
 
     def on_mouse_press(self, x: float, y: float, button: int, modifiers: int):
         if button == arcade.MOUSE_BUTTON_LEFT:
-            self.shortgun.shoot()
+            self.shortgun.shoot(self.bullet_list)
 
     def on_draw(self):
         # Start timing how long this takes
@@ -223,6 +227,7 @@ class GameView(arcade.View):
         self.player_list.draw()
         self.player.particles.draw()
         self.shortgun.draw()
+        self.bullet_list.draw()
         self.red_blob.draw()
 
         # Display timings
