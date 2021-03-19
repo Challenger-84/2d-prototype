@@ -1,6 +1,7 @@
 import arcade
 from utils.level_generator import LevelGenerator
 from objects.player import Player
+from objects.shortgun import Shortgun
 from changes_to_arcade.phy_engine_change import PhysicsEnginePlatformer
 
 import timeit
@@ -9,8 +10,8 @@ import timeit
 # and the edge of the screen.
 LEFT_VIEWPORT_MARGIN = 600
 RIGHT_VIEWPORT_MARGIN = 600
-BOTTOM_VIEWPORT_MARGIN = 50
-TOP_VIEWPORT_MARGIN = 50
+BOTTOM_VIEWPORT_MARGIN = 250
+TOP_VIEWPORT_MARGIN = 100
 
 screen_height = 800
 screen_width = 1200
@@ -39,6 +40,8 @@ class GameView(arcade.View):
 
         # A variable that holds the player sprite
         self.player = None
+        # Weapons
+        self.shortgun = None
         # Physics Engine
         self.physics_engine = None
         # Procedural Level Generator
@@ -75,6 +78,9 @@ class GameView(arcade.View):
         self.player = Player(self.window, 'images/player_img/player.png', self.setup)
         self.player_list.append(self.player)
 
+        # Giving the player shortgun
+        self.shortgun = Shortgun('images/weapons/shortgun.png', scale=0.21, player=self.player)
+
         # Platform Sprites
         self.platform_list = arcade.SpriteList()
 
@@ -103,17 +109,17 @@ class GameView(arcade.View):
             self.view_left += self.player.right - right_boundary + self.directional_move
             changed = True
 
-        # # Scroll up
-        # top_boundary = self.view_bottom + screen_height - TOP_VIEWPORT_MARGIN
-        # if self.player.top > top_boundary:
-        #     self.view_bottom += self.player.top - top_boundary
-        #     changed = True
-        #
-        # # Scroll down
-        # bottom_boundary = self.view_bottom + BOTTOM_VIEWPORT_MARGIN
-        # if self.player.bottom < bottom_boundary:
-        #     self.view_bottom -= bottom_boundary - self.player.bottom
-        #     changed = True
+        # Scroll up
+        top_boundary = self.view_bottom + screen_height - TOP_VIEWPORT_MARGIN
+        if self.player.top > top_boundary:
+            self.view_bottom += self.player.top - top_boundary
+            changed = True
+
+        # Scroll down
+        bottom_boundary = self.view_bottom + BOTTOM_VIEWPORT_MARGIN
+        if self.player.bottom < bottom_boundary:
+            self.view_bottom -= bottom_boundary - self.player.bottom
+            changed = True
 
         if changed:
             # Only scroll to integers. Otherwise we end up with pixels that
@@ -148,6 +154,8 @@ class GameView(arcade.View):
         for particle in self.player.particles:
             particle.on_update(delta_time, platforms=self.platform_list)
 
+        self.shortgun.on_update(delta_time)
+
         self.platform_list.on_update(delta_time)
         self.chunk_marker_list.on_update(delta_time)
 
@@ -181,6 +189,13 @@ class GameView(arcade.View):
         if key == arcade.key.D:
             self.player.right_pressed = False
 
+    def on_mouse_motion(self, x: float, y: float, dx: float, dy: float):
+        self.shortgun.point_at_mouse(x, y, self.view_left, self.view_bottom)
+
+    def on_mouse_press(self, x: float, y: float, button: int, modifiers: int):
+        if button == arcade.MOUSE_BUTTON_LEFT:
+            self.shortgun.shoot()
+
     def on_draw(self):
         # Start timing how long this takes
         start_time = timeit.default_timer()
@@ -204,9 +219,10 @@ class GameView(arcade.View):
         arcade.start_render()
 
         # Draw our sprites
+        self.platform_list.draw()
         self.player_list.draw()
         self.player.particles.draw()
-        self.platform_list.draw()
+        self.shortgun.draw()
         self.red_blob.draw()
 
         # Display timings

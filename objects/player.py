@@ -19,6 +19,9 @@ class Player(arcade.Sprite):
         self.speed = 20
         self.jump_speed = 55
 
+        self.x_vel = 0
+        self.y_vel = 0
+
         self.right_pressed = False
         self.left_pressed = False
         self.space_pressed = False
@@ -119,6 +122,29 @@ class Player(arcade.Sprite):
                                           x=random.uniform(self.left, self.center_x), y=self.bottom, up_vel=random.uniform(1.0, 5.0),
                                           alpha= random.randint(150, 255), lifetime=random.uniform(0.5, 1.5))
             self.particles.append(particle)
+        # add velocity
+        self.change_x += self.x_vel * delta_time
+        if self.x_vel > 0:
+            self.x_vel -= 100
+        elif self.x_vel < 0:
+            self.x_vel += 100
+
+        if -99 < self.x_vel < 99:
+            self.x_vel = 0
+
+        if physics_engine.can_jump():
+            self.change_y += self.y_vel * delta_time
+        else:
+            # Giving less force if player in air
+            self.change_y += self.y_vel/1.5 * delta_time
+
+        if self.y_vel > 0:
+            self.y_vel -= 400
+        elif self.y_vel < 0:
+            self.y_vel += 400
+
+        if -399 < self.y_vel < 399:
+            self.y_vel = 0
 
     def blink(self):
 
