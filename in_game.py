@@ -1,8 +1,11 @@
 import arcade
+from arcade.gui import UIManager
+
 from utils.level_generator import LevelGenerator
 from objects.player import Player
 from objects.shortgun import Shortgun
 from changes_to_arcade.phy_engine_change import PhysicsEnginePlatformer
+from ui_elem.ui_pause import BackToGameButton, QuitButton
 
 import timeit
 
@@ -26,11 +29,11 @@ class GameView(arcade.View):
     Main application class
     """
 
-    def __init__(self):
+    def __init__(self, start_view):
         # Call the parent init
         super().__init__()
 
-        arcade.set_background_color(arcade.color.BLACK)
+        self.start_view = start_view
 
         self.window.set_mouse_visible(True)
         # Sprite Lists
@@ -40,6 +43,7 @@ class GameView(arcade.View):
 
         # A variable that holds the player sprite
         self.player = None
+
         # Weapons
         self.shortgun = None
         self.bullet_list = None
@@ -58,6 +62,10 @@ class GameView(arcade.View):
         self.directional_move = 0
         self.directional_move_rate = 1
 
+        # Points Variable
+        self.points = 0
+        self.time_till_add_points = 0
+
         # --- Variables for our statistics
 
         # Time for on_update
@@ -71,13 +79,20 @@ class GameView(arcade.View):
         self.fps_start_timer = None
         self.fps = None
 
+    def on_show(self):
+        arcade.set_background_color(arcade.color.BLACK)
+
     def setup(self):
         # Setting up the game
 
         # Player Sprites
         self.player_list = arcade.SpriteList()
-        self.player = Player(self.window, 'images/player_img/player.png', self.setup)
+        self.player = Player(self.window, 'images/player_img/player.png')
         self.player_list.append(self.player)
+
+        # Reset points
+        self.points = 0
+        self.time_till_add_points = 0
 
         # Giving the player shortgun
         self.shortgun = Shortgun('images/weapons/shortgun.png', scale=0.21, player=self.player)
@@ -163,6 +178,12 @@ class GameView(arcade.View):
         self.platform_list.on_update(delta_time)
         self.chunk_marker_list.on_update(delta_time)
 
+        # Adding points
+        # self.time_till_add_points -= delta_time
+        # if self.time_till_add_points < 0:
+        #     self.points = self.player.center_x // 100
+        #     self.time_till_add_points = 0.2
+
         # Updating the procedural generator
         self.proGenerator.update(self.player.center_x, scroll, delta_time)
 
@@ -182,6 +203,11 @@ class GameView(arcade.View):
         if key == arcade.key.F:
             # User hits f. Flip between full and not full screen.
             self.window.change_fullscreen()
+
+        # Pause the game
+        if key == arcade.key.ESCAPE:
+            pause_view = PauseView(self, self.start_view)
+            self.window.show_view(pause_view)
 
     def on_key_release(self, key, modifiers):
         """When a key is released"""
@@ -230,6 +256,11 @@ class GameView(arcade.View):
         self.bullet_list.draw()
         self.red_blob.draw()
 
+        # # Drawing score
+        # view_port = self.window.get_viewport()
+        # arcade.draw_text(f'Score: {self.points:.0f}', start_x=view_port[1]-100, start_y=view_port[3],
+        #                  color=arcade.color.WHITE, anchor_x='center', anchor_y='top', font_size=25)
+
         # Display timings
         if self.window.show_fps:
             output = f"Processing time: {self.processing_time:.3f}"
@@ -246,3 +277,38 @@ class GameView(arcade.View):
             self.draw_time = timeit.default_timer() - start_time
 
         # self.chunk_marker_list.draw()
+
+
+class PauseView(arcade.View):
+
+    def __init__(self, cur_game_view, start_view):
+        super().__init__()
+        self.cur_game_view = cur_game_view
+        self.ui_manager = UIManager()
+        self.start_view = start_view
+
+        viewport = self.window.get_viewport()
+
+        self.bg_rec = arcade.SpriteSolidColor(self.window.width, self.window.height, arcade.color.WHITE)
+        self.bg_rec.alpha = 100
+        self.bg_rec.left = viewport[0]
+        self.bg_rec.bottom = viewport[2]
+
+    def on_show(self):
+        self.bg_rec.draw()
+        # Drawing the button
+        button = BackToGameButton(self.window.width/2, 300, 250, self, self.cur_game_view)
+        self.ui_manager.add_ui_element(button)
+
+        button = QuitButton(self.window.width / 2, 200, 250, self, self.start_view)
+        self.ui_manager.add_ui_element(button)
+        arcade.set_viewport(0, self.window.width,
+                            0, self.window.height)
+
+    def on_hide_view(self):
+        self.ui_manager.unregister_handlers()
+
+    def on_key_press(self, key: int, modifiers: int):
+
+        if key == arcade.key.ESCAPE:
+            self.window.show_view(self.cur_game_view)

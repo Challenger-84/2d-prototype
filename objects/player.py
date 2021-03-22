@@ -2,14 +2,14 @@
 import arcade
 from objects.player_particle import PlayerMoveParticle
 import random
+from gameover import GameOverView
 
 
 class Player(arcade.Sprite):
 
-    def __init__(self, screen, filename, reset_func):
+    def __init__(self, screen, filename):
         super().__init__(filename, 0.9)
         self.screen = screen
-        self.reset_func = reset_func
 
         # Positional variables
         self.center_y = screen.height / 2
@@ -51,8 +51,9 @@ class Player(arcade.Sprite):
     def on_update(self, delta_time: float = 1 / 60, physics_engine=None, view=None):
 
         # Check if player fell down
-        if self.top < 0:
-            self.reset_func()
+        if self.top < -50 or self.center_x < 0:
+            game_over_view = GameOverView(game_view=view)
+            view.window.show_view(game_over_view)
 
         # Movement
         self.change_x = 0

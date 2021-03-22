@@ -28,7 +28,7 @@ class StartButton(UIGhostFlatButton):
 
     def on_click(self):
         """ Called when user lets off button """
-        game_view = self.GameView()
+        game_view = self.GameView(self.view)
         game_view.setup()
         self.view.window.show_view(game_view)
 

@@ -2,9 +2,9 @@
 import arcade
 import arcade.gui
 from arcade.gui import UIManager
+
 from ui_elem.ui_start import StartButton, OptionsButton, QuitButton
 from ui_elem.ui_options import BackButton, ShowFPSButton, FullScreenButton, ResolutionButton
-
 from in_game import GameView
 
 # Constants
@@ -15,7 +15,7 @@ screen_title = "Plat former"
 
 class GameWindow(arcade.Window):
     def __init__(self, width, height, title):
-        super().__init__(width, height, title)
+        super().__init__(width, height, title, update_rate=1/60)
         self.show_fps = False
         self.is_fullscreen = False
 
@@ -45,6 +45,10 @@ class StartView(arcade.View):
 
         self.uimanager = UIManager()
         self.ui_elems = []
+
+    @classmethod
+    def start_class(cls):
+        return cls
 
     def on_show(self):
         """ This is run once when we switch to this view """
@@ -98,21 +102,20 @@ class OptionView(arcade.View):
         self.bg.left = 0
 
     def on_show(self):
-
         # Back Button
         button = BackButton(self.window.width / 2, 200, 200, self, start_view=StartView)
         self.ui_manager.add_ui_element(button)
 
         # Options Button
-        button = ShowFPSButton(self.window.width/2, 500, 300, self)
+        button = ShowFPSButton(self.window.width / 2, 500, 300, self)
         self.ui_manager.add_ui_element(button)
 
         # Change Full screen Button
-        button = FullScreenButton(self.window.width/2, 400, 200, self)
+        button = FullScreenButton(self.window.width / 2, 400, 200, self)
         self.ui_manager.add_ui_element(button)
 
         # Change Res Button
-        button = ResolutionButton(self.window.width/2, 300, 200, self, main)
+        button = ResolutionButton(self.window.width / 2, 300, 200, self, main)
         self.ui_manager.add_ui_element(button)
 
     def on_update(self, delta_time: float):
@@ -121,13 +124,12 @@ class OptionView(arcade.View):
         self.bg.height = height
 
     def on_draw(self):
-        print(self.bg.width)
         self.bg.draw()
         arcade.draw_text('OPTIONS', self.window.width / 2, 600,
                          arcade.color.ORANGE, font_size=80, anchor_x="center")
 
     def on_hide_view(self):
-        self.ui_manager.unregister_handlers()
+        self.ui_manager.purge_ui_elements()
 
 
 def main():
